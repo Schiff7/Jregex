@@ -53,7 +53,7 @@ public class NFA {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.operands = new StringBuffer();
-        
+
         if (c.length() > 1)
             return;
         State x = new State(count++), y = new State(count++);
@@ -72,24 +72,28 @@ public class NFA {
     public State getInitState() {
         return initState;
     }
+
     /**
      * @param initState the initState to set
      */
     public void setInitState(State initState) {
         this.initState = initState;
     }
+
     /**
      * @return the endState
      */
     public State getEndState() {
         return endState;
     }
+
     /**
      * @param endState the endState to set
      */
     public void setEndState(State endState) {
         this.endState = endState;
     }
+
     /**
      * @return the map
      */

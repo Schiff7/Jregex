@@ -36,7 +36,7 @@ public enum MetaChr {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
         s.addTransitions(null, n[0].getInitState());
-        s.addTransitions(null, n[1].getEndState());
+        s.addTransitions(null, n[1].getInitState());
         n[0].getEndState().addTransitions(null, e);
         n[1].getEndState().addTransitions(null, e);
         n[0].getMap().putAll(n[1].getMap());

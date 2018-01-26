@@ -35,4 +35,12 @@ public class State {
     public void addTransitions(String c, State s) {
         this.transitions.put(new NFA.Pairs(this, c), s);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        
+        return this.id == ((State)obj).id;
+    }
 }
