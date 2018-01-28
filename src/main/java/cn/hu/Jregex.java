@@ -13,13 +13,125 @@ import java.util.stream.Collectors;
  */
 public class Jregex {
     private String raw;
+    private List<Token> tokens;
     private NFA NFA;
     private DFA DFA;
 
     public Jregex(String raw) {
         this.raw = raw;
-        this.NFA = toNFA(this.raw);
-        this.DFA = toDFA(this.NFA);
+        try {
+            this.tokens = tokenize(raw);    
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+        }
+        //this.NFA = toNFA(this.raw);
+        //this.DFA = toDFA(this.NFA);
+    }
+
+    public List<Token> tokenize(String s) throws TokenizeFailedException{
+        List<Token> l = new ArrayList<>();
+        int bracketsPattern = 0;
+        for (int i = 0; i < s.length();) {
+            String value = String.valueOf(s.charAt(i)), tmp;
+            MetaChr mc = MetaChr.map(value), mcc;
+            if (mc == null) {
+                l.add(new Token(value, MetaChr.OPERAND));
+                l.add(new Token("_", MetaChr.CONCAT));
+                i++;
+            } else {
+                switch (mc.optType()) {
+                    case DELIMITER:
+                        if (i == 0) {
+                            l.add(new Token(value, mc));
+                            i++;
+                        } else if (i == s.length() - 1) {
+                            l.remove(l.size() - 1);
+                            l.add(new Token(value, mc));
+                            i++;
+                        } else {
+                            throw new TokenizeFailedException();
+                        }
+                        break;
+                    case PREFIX:
+                        switch (mc.value()) {
+                            case "\\":
+                                tmp = String.valueOf(s.charAt(i + 1));
+                                mcc =  MetaChr.map(value + tmp);
+                                if ( MetaChr.map(tmp) != null ) {
+                                    l.add(new Token(tmp, MetaChr.OPERAND));
+                                    i += 2;
+                                } else if ( mcc != null ) {
+                                    l.add(new Token(value + tmp, mcc));
+                                    i += 2;
+                                } else {
+                                    throw new TokenizeFailedException();
+                                }
+                                l.add(new Token("_", MetaChr.CONCAT));
+                                break;
+                            case "^":
+                                break;
+                        }
+                        break;
+                    case GROUP:
+                        switch (mc.value()) {
+                            case "(":
+                                tmp = s.substring(i, i + 3);
+                                System.out.println(tmp);
+                                mcc = MetaChr.map(tmp);
+                                if (mcc != null) {
+                                    l.add(new Token(tmp, mcc));
+                                    i += 3;
+                                } else {
+                                    l.add(new Token(value, mc));
+                                    i++;
+                                }
+                                bracketsPattern += 1;
+                                break;
+                            case ")":
+                                l.add(l.size() - 1, new Token(value, mc));
+                                bracketsPattern -= 1;
+                                i++;
+                                break;
+                            case "{":
+                                String acc = "{";
+                                char c;
+                                i++;
+                                for (; ( c = s.charAt(i) ) != '}'; i++) {
+                                    if ( c != ',' && (c < 48 || c > 57 || i == s.length() - 1)) {
+                                        throw new TokenizeFailedException();
+                                    }
+                                    acc += c;
+                                }
+                                acc += "}";
+                                l.add(l.size() - 1, new Token(acc, MetaChr.LEFT_BRACE));
+                                i++;
+                                break;
+                            case "[":
+                                break;
+                        }
+                        break;
+                    case SUFFIX:
+                        l.add(l.size() - 1, new Token(value, mc));
+                        i++;
+                        break;
+                    case CONJUNCTION:
+                        l.remove(l.size() - 1);
+                        l.add(new Token(value, mc));
+                        i++;
+                        break;
+                    default:
+                        l.add(new Token(value, mc));
+                        i++;
+                        break;
+                }
+            }
+
+        }
+        if (bracketsPattern != 0) {
+            throw new TokenizeFailedException();
+        }
+        return l;
     }
 
     /**
@@ -97,6 +209,7 @@ public class Jregex {
                         case CHARCLASS:
                             break;
                         case GROUP:
+                            
                             break;
                         case DELIMITER:
                             break;
@@ -108,6 +221,17 @@ public class Jregex {
             }
         }
         return operandStack.pop();
+    }
+
+    public NFA toNFA2(List<Token> l) {
+        Stack<NFA> operandStack = new Stack<>();
+        Stack<MetaChr> operatorStack = new Stack<>();
+        l.forEach(token -> {
+            if (token.getName() == MetaChr.OPERAND) {
+
+            }
+        });
+        return  null;
     }
 
     public DFA toDFA(NFA n) {
@@ -131,7 +255,7 @@ public class Jregex {
                     acc.addAll(item);
                     return acc;
                 });
-                System.out.println(r);
+                //System.out.println(r);
                 if (!r.isEmpty()) {
                     l.addAll(move(r));
                 }
@@ -158,7 +282,7 @@ public class Jregex {
                             return acc;
                         });
                         l = move(l);
-                        if ((!l.equals(state)) && (!l.isEmpty())) {
+                        if ( !(l.equals(state) || l.isEmpty()) ) {
                             r.add(l);
                             d.getStates().add(l);
                             d.getMap().put(new DFA.Pairs(state, s), l);
@@ -170,13 +294,6 @@ public class Jregex {
         }
 
         return new Anonymous().d;
-    }
-
-    /**
-     * @return to DFA
-     */
-    public DFA toDFA() {
-        return null;
     }
 
     /**
@@ -194,9 +311,22 @@ public class Jregex {
     }
 
     /**
+     * @return the tokens
+     */
+    public List<Token> getTokens() {
+        return tokens;
+    }
+
+    /**
      * @return the raw
      */
     public String getRaw() {
         return raw;
     }
+}
+
+class TokenizeFailedException extends Exception {
+
+	private static final long serialVersionUID = 1L;
+
 }

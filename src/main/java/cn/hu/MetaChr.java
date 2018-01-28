@@ -8,10 +8,7 @@ import java.util.stream.Collectors;
  * MetaChr
  */
 public enum MetaChr {
-    LIMIT ("/", OperationType.DELIMITER, 5, (n) -> {
-        return null;
-    }),
-    ESCAPE ("\\", OperationType.PREFIX, 0, (n) -> {
+    OPERAND ("", OperationType.NONE, 0, (n) -> {
         return null;
     }),
     CONCAT ("", OperationType.CONJUNCTION, 3, (n) -> {
@@ -21,6 +18,12 @@ public enum MetaChr {
         n[0].getOperands().append(n[1].getOperands());
         n[0].getEndState().addTransitions(null, n[1].getInitState());
         n[0].setEndState(n[1].getEndState());
+        return n[0];
+    }),
+    LIMIT ("/", OperationType.DELIMITER, 5, (n) -> {
+        return null;
+    }),
+    ESCAPE ("\\", OperationType.PREFIX, 0, (n) -> {
         return n[0];
     }),
     POINT (".",OperationType.CHARCLASS , 3, (n) -> {
@@ -65,6 +68,7 @@ public enum MetaChr {
         return n[0];
     }),
     PLUS ("+", OperationType.SUFFIX, 2, (n) -> {
+        
         return null;
     }),
     QUESTION_MARK ("?", OperationType.SUFFIX, 2, (n) -> {
@@ -96,6 +100,9 @@ public enum MetaChr {
     }),
     RIGHT_BRACE ("}", OperationType.GROUP, 2, (n) -> {
         return null;
+    }),
+    DIGITAL ("\\d", OperationType.CHARCLASS, 0, (n) -> {
+        return null;
     });
 
     private final String value;
@@ -109,7 +116,8 @@ public enum MetaChr {
         CONJUNCTION (2),
         CHARCLASS (1),
         GROUP (1),
-        DELIMITER (1);
+        DELIMITER (1),
+        NONE (0);
 
         private final int paramSize;
         

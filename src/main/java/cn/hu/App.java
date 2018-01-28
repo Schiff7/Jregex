@@ -9,7 +9,7 @@ public class App {
         System.out.println( "Hello World!" );
         NFA n = new NFA("n"), m = new NFA("m");
         n = MetaChr.UNION.opt().exe(n, m);
-        Jregex r = new Jregex("/a|b*/");
-        Utils.show(r.getDFA());
+        Jregex r = new Jregex("/ab\\d|c{1,2}f\\{/");
+        System.out.println(r.getTokens());
     }
 }
