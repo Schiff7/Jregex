@@ -113,10 +113,10 @@ class DFA {
                     return acc;
                 });
                 l = epsilonClosure(l);
-                if (l.equals(state)) {
+                if (this.states.contains(l)) {
                     this.map.put(new DFA.Pairs(state, s), l);
                 }
-                if ( !(l.equals(state) || l.isEmpty()) ) {
+                if ( !(this.states.contains(l) || l.isEmpty()) ) {
                     r.add(l);
                     this.states.add(l);
                     this.map.put(new DFA.Pairs(state, s), l);

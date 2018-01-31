@@ -92,10 +92,29 @@ public class NFA {
                 operandStack.push(new NFA(token.getValue()));
                 i++;
             } else {
-                if (token.getName() == Meta.SLASH && i == 0) {
-                    operatorStack.push(token);
-                    i++;
-                    continue;
+                switch (token.getName()) {
+                    case SLASH:
+                        if (i == 0) {
+                            operatorStack.push(token);
+                            i++;
+                            continue;
+                        }
+                        break;
+                    case LEFT_PARENTHESIS:
+                        String s = token.getValue();
+                        s = "/" + s.substring(1, s.length() - 1) + "/";
+                        try {
+                            NFA n = new NFA(Jregex.tokenize(s));
+                            operandStack.push(n);
+                            i++;
+                            continue;
+                        } catch (Exception e) {
+                            //TODO: handle exception
+                            e.printStackTrace();
+                        }
+                        break;
+                    default:
+                        break;
                 }
 
                 if (token.getName().priority() < operatorStack.peek().getName().priority()) {
@@ -179,7 +198,7 @@ public class NFA {
      */
     public NFA concat(NFA l, NFA r) {
         l.getMap().putAll(r.getMap());
-        l.getMap().put(new NFA.Pairs(r.getEndState(), null), r.getInitState());
+        l.getMap().put(new NFA.Pairs(l.getEndState(), null), r.getInitState());
         l.getStates().addAll(r.getStates());
         l.getOperands().append(r.getOperands());
         l.getEndState().addTransitions(null, r.getInitState());
@@ -208,8 +227,7 @@ public class NFA {
         l.setInitState(s);
         l.setEndState(e);
         return l;
-        }
-
+    }
 
     /**
      * @return the initState

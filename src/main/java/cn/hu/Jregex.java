@@ -30,7 +30,7 @@ public class Jregex {
      * tokenize
      * @param s
      */
-    public List<Token> tokenize(String s) throws TokenizeFailedException {
+    public static List<Token> tokenize(String s) throws TokenizeFailedException {
         List<Token> l = new ArrayList<>();
         final String NONE = "_";
         for (int i = 0; i < s.length();) {
@@ -49,7 +49,9 @@ public class Jregex {
                         l.add(new Token(meta, c));
                         i++;
                     } else if (i == s.length() - 1) {
-                        l.remove(l.size() - 1);
+                        if (l.get(l.size() - 1).getName() == Meta.CONCAT) {
+                            l.remove(l.size() - 1);
+                        }
                         l.add(new Token(meta, c));
                         i++;
                     } else {
