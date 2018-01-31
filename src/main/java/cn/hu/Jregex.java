@@ -135,7 +135,7 @@ public class Jregex {
                     l.add(l.size() - 1, new Token(meta, c));
                     i++;
                     break;
-                case QUES_MARK:
+                case OPTIONAL:
                     l.add(l.size() - 1, new Token(meta, c));
                     i++;
                     break;

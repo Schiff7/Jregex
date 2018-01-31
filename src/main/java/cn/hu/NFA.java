@@ -113,6 +113,10 @@ public class NFA {
                             e.printStackTrace();
                         }
                         break;
+                    case CHARCLASS:
+                        operandStack.push(charClass(token));
+                        i++;
+                        continue;
                     default:
                         break;
                 }
@@ -126,6 +130,12 @@ public class NFA {
                         case STAR:
                             operandStack.push(star(operandStack.pop()));
                             break;
+                        case PLUS:
+                            operandStack.push(plus(operandStack.pop()));
+                            break;
+                        case OPTIONAL:
+                            operandStack.push(optional(operandStack.pop()));
+                            break;
                         case CONCAT:
                             NFA n = operandStack.pop();
                             NFA m = operandStack.pop();
@@ -135,6 +145,12 @@ public class NFA {
                             n = operandStack.pop();
                             m = operandStack.pop();
                             operandStack.push(union(m, n));
+                            break;
+                        case REPEAT:
+                            String s = token.getValue();
+                            int min = Integer.valueOf(s.substring(1, s.indexOf(',')));
+                            int max = Integer.valueOf(s.substring(s.indexOf(",") + 1, s.length() - 1));
+                            operandStack.push(repeat(operandStack.pop(), min, max));
                             break;
                         case SLASH:
                             i++;
@@ -160,17 +176,7 @@ public class NFA {
      * @param max
      */
     public NFA repeat(NFA n, int min, int max) {
-        State s = new State(NFA.count++);
-        State e = new State(NFA.count++);
-        n.getStates().addAll(Arrays.asList(s, e));
-        s.addTransitions(null, n.getInitState());
-        s.addTransitions(null, e);
-        n.getEndState().addTransitions(null, e);
-        n.getEndState().addTransitions(null, n.getInitState());
-        n.getMap().putAll(s.getTransitions());
-        n.getMap().putAll(n.getEndState().getTransitions());
-        n.setInitState(s);
-        n.setEndState(e);
+
         return n;
     }
     /**
@@ -180,15 +186,15 @@ public class NFA {
     public NFA star(NFA n) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
-        n.getStates().addAll(Arrays.asList(s, e));
-        s.addTransitions(null, n.getInitState());
+        n.states.addAll(Arrays.asList(s, e));
+        s.addTransitions(null, n.initState);
         s.addTransitions(null, e);
-        n.getEndState().addTransitions(null, e);
-        n.getEndState().addTransitions(null, n.getInitState());
-        n.getMap().putAll(s.getTransitions());
-        n.getMap().putAll(n.getEndState().getTransitions());
-        n.setInitState(s);
-        n.setEndState(e);
+        n.endState.addTransitions(null, e);
+        n.endState.addTransitions(null, n.initState);
+        n.map.putAll(s.getTransitions());
+        n.map.putAll(n.endState.getTransitions());
+        n.initState = s;
+        n.endState = e;
         return n;
     }
     /**
@@ -197,12 +203,12 @@ public class NFA {
      * @param r
      */
     public NFA concat(NFA l, NFA r) {
-        l.getMap().putAll(r.getMap());
-        l.getMap().put(new NFA.Pairs(l.getEndState(), null), r.getInitState());
-        l.getStates().addAll(r.getStates());
-        l.getOperands().append(r.getOperands());
-        l.getEndState().addTransitions(null, r.getInitState());
-        l.setEndState(r.getEndState());
+        l.map.putAll(r.map);
+        l.map.put(new NFA.Pairs(l.endState, null), r.initState);
+        l.states.addAll(r.states);
+        l.operands.append(r.operands);
+        l.endState.addTransitions(null, r.initState);
+        l.endState = r.endState;
         return l;
     }
     /**
@@ -215,18 +221,43 @@ public class NFA {
         State e = new State(NFA.count++);
         s.addTransitions(null, l.getInitState());
         s.addTransitions(null, r.getInitState());
-        l.getEndState().addTransitions(null, e);
-        r.getEndState().addTransitions(null, e);
-        l.getMap().putAll(r.getMap());
-        l.getStates().addAll(r.getStates());
-        l.getOperands().append(r.getOperands());
-        l.getMap().putAll(s.getTransitions());
-        l.getMap().putAll(l.getEndState().getTransitions());
-        l.getMap().putAll(r.getEndState().getTransitions());
-        l.getStates().addAll(Arrays.asList(s, e));
-        l.setInitState(s);
-        l.setEndState(e);
+        l.endState.addTransitions(null, e);
+        r.endState.addTransitions(null, e);
+        l.map.putAll(r.getMap());
+        l.states.addAll(r.getStates());
+        l.operands.append(r.getOperands());
+        l.map.putAll(s.getTransitions());
+        l.map.putAll(l.endState.getTransitions());
+        l.map.putAll(r.endState.getTransitions());
+        l.states.addAll(Arrays.asList(s, e));
+        l.initState = s;
+        l.endState = e;
         return l;
+    }
+
+    public NFA plus(NFA n) {
+        n.map.put(new NFA.Pairs(n.endState, null), n.initState);
+        n.endState.addTransitions(null, n.initState);
+        return n;
+    }
+
+    public NFA optional(NFA n) {
+        State s = new State(NFA.count++);
+        State e = new State(NFA.count++);
+        n.states.addAll(Arrays.asList(s, e));
+        s.addTransitions(null, n.initState);
+        s.addTransitions(null, e);
+        n.endState.addTransitions(null, e);
+        n.map.putAll(s.getTransitions());
+        n.map.putAll(n.endState.getTransitions());
+        n.initState = s;
+        n.endState = e;
+        return n;
+    }
+
+    public NFA charClass(Token t) {
+        NFA n = new NFA();
+        return n;
     }
 
     /**

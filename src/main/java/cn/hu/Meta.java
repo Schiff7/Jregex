@@ -23,7 +23,7 @@ public enum Meta {
     DOLLAR ("$", 4),
     CARET ("^", 4),
     PLUS ("+", 3),
-    QUES_MARK ("?", 3),
+    OPTIONAL ("?", 3),
     LEFT_PARENTHESIS ("(", 2),
     NON_CAPTURING_GROUP ("(?:", 2),
     POSITIVE_LOOKAHEAD ("(?=", 2),
