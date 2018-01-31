@@ -1,5 +1,8 @@
 package cn.hu;
 
+/**
+ * Meta
+ */
 public enum Meta {
     /**
      * Virtual Mark.

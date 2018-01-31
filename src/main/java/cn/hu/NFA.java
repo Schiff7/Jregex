@@ -17,7 +17,10 @@ public class NFA {
     private State endState;
     private StringBuffer operands;
     public static int count = 0;
-
+    
+    /**
+     * NFA.Pairs as the key of map which records the relations of NFA 
+     */
     public static class Pairs {
         private State state;
         private String string;
@@ -45,7 +48,9 @@ public class NFA {
             return "{state: " + state + ", string: " + string + "}";
         }
     }
-
+    /**
+     * constructor with no argument.
+     */
     public NFA() {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
@@ -53,6 +58,7 @@ public class NFA {
     }
 
     /**
+     * constructor with a String from a char. 
      * @param c length 1 String
      */
     public NFA(String c) {
@@ -73,13 +79,15 @@ public class NFA {
     }
 
 
-
-    public NFA(List<Token2> l) {
-        System.out.println(l);
+    /**
+     * constructor
+     * @param l token list
+     */
+    public NFA(List<Token> l) {
         Stack<NFA> operandStack = new Stack<>();
-        Stack<Token2> operatorStack = new Stack<>();
+        Stack<Token> operatorStack = new Stack<>();
         for (int i = 0; i < l.size();) {
-            Token2 token = l.get(i);
+            Token token = l.get(i);
             if (token.getName() == Meta.OPERAND) {
                 operandStack.push(new NFA(token.getValue()));
                 i++;
@@ -94,13 +102,12 @@ public class NFA {
                     operatorStack.push(token);
                     i++;
                 } else {
-                    Token2 t = operatorStack.pop();
+                    Token t = operatorStack.pop();
                     switch (t.getName()) {
                         case STAR:
                             operandStack.push(star(operandStack.pop()));
                             break;
                         case CONCAT:
-                            System.out.println(operandStack);
                             NFA n = operandStack.pop();
                             NFA m = operandStack.pop();
                             operandStack.push(concat(m, n));
@@ -127,7 +134,12 @@ public class NFA {
         this.endState = r.endState;
         this.operands = r.operands;
     }
-
+    /**
+     * repeat UNFINISHED
+     * @param n
+     * @param min
+     * @param max
+     */
     public NFA repeat(NFA n, int min, int max) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
@@ -142,7 +154,10 @@ public class NFA {
         n.setEndState(e);
         return n;
     }
-
+    /**
+     * star
+     * @param n
+     */
     public NFA star(NFA n) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
@@ -157,7 +172,11 @@ public class NFA {
         n.setEndState(e);
         return n;
     }
-
+    /**
+     * concat
+     * @param l
+     * @param r
+     */
     public NFA concat(NFA l, NFA r) {
         l.getMap().putAll(r.getMap());
         l.getMap().put(new NFA.Pairs(r.getEndState(), null), r.getInitState());
@@ -167,6 +186,11 @@ public class NFA {
         l.setEndState(r.getEndState());
         return l;
     }
+    /**
+     * union
+     * @param l
+     * @param r
+     */
     public NFA union(NFA l, NFA r) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);

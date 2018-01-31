@@ -1,11 +1,13 @@
 package cn.hu;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * DFA
@@ -17,13 +19,9 @@ class DFA {
     private Set<State> initState;
     private StringBuffer operands;
 
-    public DFA() {
-        this.map = new HashMap<>();
-        this.states = new ArrayList<>();
-        this.initState = new HashSet<>();
-        this.operands = new StringBuffer();
-    }
-
+    /**
+     * DFA.Pairs as the key of map which records the relations of DFA 
+     */
     public static class Pairs {
         private Set<State> state;
         private String string;
@@ -66,6 +64,86 @@ class DFA {
             h += string.length();
             return state.stream().map(x -> x.getId()).reduce(0, (acc, item) -> acc + item) + h;
         }
+    }
+    /**
+     * constructor with no argument
+     */
+    public DFA() {
+        this.map = new HashMap<>();
+        this.states = new ArrayList<>();
+        this.initState = new HashSet<>();
+        this.operands = new StringBuffer();
+    }
+    /**
+     * constructe from a NFA
+     * @param n NFA
+     */
+    public DFA(NFA n) {
+        this.map = new HashMap<>();
+        this.states = new ArrayList<>();
+        Set<State> initState = epsilonClosure(new HashSet<State>(Arrays.asList(n.getInitState())));
+        this.initState = initState;
+        this.operands = n.getOperands();
+        this.states.add(new HashSet<State>(initState));
+        move(n, Arrays.asList(initState));
+        this.acceptStates = this.states.stream().filter(state -> state.contains(n.getEndState())).collect(Collectors.toSet());
+    }
+    /**
+     * move
+     * @param n
+     * @param states
+     */
+    List<Set<State>> move(NFA n, List<Set<State>> states) {
+        if (states.isEmpty()) {
+            return null;
+        }
+        List<Set<State>> r = new ArrayList<>();
+        states.stream().forEach(state -> {
+            for (int i = 0; i < n.getOperands().length(); i++) {
+                String s = String.valueOf(n.getOperands().charAt(i));
+                Set<State> set = new HashSet<>();
+                Set<State> l = state.stream().map(x -> {
+                    return x.getTransitions().keySet().stream().filter(pairs -> {
+                        if (null == pairs.getString())
+                            return false;
+                        return pairs.getString().equals(s);
+                    }).map(pairs -> x.getTransitions().get(pairs)).collect(Collectors.toSet());
+                }).reduce(set, (acc, item) -> {
+                    acc.addAll(item);
+                    return acc;
+                });
+                l = epsilonClosure(l);
+                if (l.equals(state)) {
+                    this.map.put(new DFA.Pairs(state, s), l);
+                }
+                if ( !(l.equals(state) || l.isEmpty()) ) {
+                    r.add(l);
+                    this.states.add(l);
+                    this.map.put(new DFA.Pairs(state, s), l);
+                }
+            }
+        });
+        return move(n, r);
+    }
+
+    /**
+     * epsilonClosure
+     * @param l
+     */
+    public Set<State> epsilonClosure(Set<State> l) {
+        Set<State> set = new HashSet<>();
+        Set<State> r = l.stream().map(state -> {
+            return state.getTransitions().keySet().stream().filter(pairs -> pairs.getString() == null)
+                    .map(pairs -> state.getTransitions().get(pairs)).collect(Collectors.toSet());
+        }).reduce(set, (acc, item) -> {
+            acc.addAll(item);
+            return acc;
+        });
+        //System.out.println(r);
+        if (!r.isEmpty()) {
+            l.addAll(epsilonClosure(r));
+        }
+        return l;
     }
 
     /**

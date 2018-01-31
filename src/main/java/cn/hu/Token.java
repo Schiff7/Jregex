@@ -1,29 +1,32 @@
 package cn.hu;
 
+/**
+ * Token
+ */
 public class Token {
-  private String value;
-  private MetaChr name;
+    private Meta name;
+    private String value;
 
-  public Token(String value, MetaChr name) {
-    this.value = value;
-    this.name = name;
-  }
+    public Token(Meta name, String value) {
+        this.name = name;
+        this.value = value;
+    }
 
-  /**
-   * @return the value
-   */
-  public String getValue() {
-    return value;
-  }
-  /**
-   * @return the name
-   */
-  public MetaChr getName() {
-    return name;
-  }
+    /**
+     * @return the type
+     */
+    public Meta getName() {
+        return name;
+    }
+    /**
+     * @return the value
+     */
+    public String getValue() {
+        return value;
+    }
 
-  @Override
-  public String toString() {
-    return "{value: " + this.value + ", name: " + this.name + "}";
-  }
+    @Override
+    public String toString() {
+        return "{value: " + value + ", name: " + name + "}";
+    }
 }
