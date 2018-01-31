@@ -1,18 +1,12 @@
 package cn.hu;
 
-import java.util.Stack;
-
 public class Token {
-  String value;
-  MetaChr name;
+  private String value;
+  private MetaChr name;
 
   public Token(String value, MetaChr name) {
     this.value = value;
     this.name = name;
-  }
-
-  public void exe(Stack<NFA> operandStack, Stack<MetaChr> operatorStack) {
-    this.name.opt().exe(n);
   }
 
   /**

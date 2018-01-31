@@ -43,4 +43,8 @@ public class State {
         
         return this.id == ((State)obj).id;
     }
+    @Override
+    public String toString() {
+        return "{id: " + id + "}";
+    }
 }

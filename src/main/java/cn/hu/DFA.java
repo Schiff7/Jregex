@@ -13,6 +13,7 @@ import java.util.Set;
 class DFA {
     private Map<Pairs, Set<State>> map;
     private List<Set<State>> states;
+    private Set<Set<State>> acceptStates;
     private Set<State> initState;
     private StringBuffer operands;
 
@@ -44,6 +45,26 @@ class DFA {
          */
         public String getString() {
             return string;
+        }
+
+        @Override
+        public String toString() {
+            return "{state: " + state + ", string: " + string + "}";
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this)
+                return true;
+            return state.equals( ((Pairs)obj).state ) && string.equals( ((Pairs)obj).string );
+        }
+        @Override
+        public int hashCode() {
+            int h = 0;
+            for (int i = 0; i < string.length(); i++) {
+                h += string.charAt(i);
+            }
+            h += string.length();
+            return state.stream().map(x -> x.getId()).reduce(0, (acc, item) -> acc + item) + h;
         }
     }
 
@@ -86,5 +107,17 @@ class DFA {
      */
     public void setOperands(StringBuffer operands) {
         this.operands = operands;
+    }
+    /**
+     * @return the acceptStates
+     */
+    public Set<Set<State>> getAcceptStates() {
+        return acceptStates;
+    }
+    /**
+     * @param acceptStates the acceptStates to set
+     */
+    public void setAcceptStates(Set<Set<State>> acceptStates) {
+        this.acceptStates = acceptStates;
     }
 }
