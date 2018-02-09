@@ -16,7 +16,7 @@ public class NFA {
     private State initState;
     private State endState;
     private StringBuffer operands;
-    public static int count = 0;
+    private static int count = 0;
     
     /**
      * NFA.Pairs as the key of map which records the relations of NFA 
@@ -25,16 +25,9 @@ public class NFA {
         private State state;
         private String string;
 
-        public Pairs(State state, String string) {
+        Pairs(State state, String string) {
             this.state = state;
             this.string = string;
-        }
-
-        /**
-         * @return the state
-         */
-        public State getState() {
-            return state;
         }
 
         /**
@@ -51,7 +44,7 @@ public class NFA {
     /**
      * constructor with no argument.
      */
-    public NFA() {
+    NFA() {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.operands = new StringBuffer();
@@ -61,7 +54,7 @@ public class NFA {
      * constructor with a String from a char. 
      * @param c length 1 String
      */
-    public NFA(String c) {
+    NFA(String c) {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.operands = new StringBuffer();
@@ -83,7 +76,7 @@ public class NFA {
      * constructor
      * @param l token list
      */
-    public NFA(List<Token> l) {
+    NFA(List<Token> l) {
         Stack<NFA> operandStack = new Stack<>();
         Stack<Token> operatorStack = new Stack<>();
         for (int i = 0; i < l.size();) {
@@ -113,7 +106,7 @@ public class NFA {
                             e.printStackTrace();
                         }
                         break;
-                    case CHARCLASS:
+                    case LEFT_BRACKET:
                         operandStack.push(charClass(token));
                         i++;
                         continue;
@@ -171,19 +164,19 @@ public class NFA {
     }
     /**
      * repeat UNFINISHED
-     * @param n
-     * @param min
-     * @param max
+     * @param n NFA
+     * @param min specified minimum repeat times
+     * @param max specified maximum repeat times
      */
-    public NFA repeat(NFA n, int min, int max) {
+    private NFA repeat(NFA n, int min, int max) {
 
         return n;
     }
     /**
      * star
-     * @param n
+     * @param n the operand
      */
-    public NFA star(NFA n) {
+    private NFA star(NFA n) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
         n.states.addAll(Arrays.asList(s, e));
@@ -199,10 +192,10 @@ public class NFA {
     }
     /**
      * concat
-     * @param l
-     * @param r
+     * @param l left operand
+     * @param r right operand
      */
-    public NFA concat(NFA l, NFA r) {
+    private NFA concat(NFA l, NFA r) {
         l.map.putAll(r.map);
         l.map.put(new NFA.Pairs(l.endState, null), r.initState);
         l.states.addAll(r.states);
@@ -213,10 +206,10 @@ public class NFA {
     }
     /**
      * union
-     * @param l
-     * @param r
+     * @param l left operand
+     * @param r right operand
      */
-    public NFA union(NFA l, NFA r) {
+    private NFA union(NFA l, NFA r) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
         s.addTransitions(null, l.getInitState());
@@ -235,13 +228,13 @@ public class NFA {
         return l;
     }
 
-    public NFA plus(NFA n) {
+    private NFA plus(NFA n) {
         n.map.put(new NFA.Pairs(n.endState, null), n.initState);
         n.endState.addTransitions(null, n.initState);
         return n;
     }
 
-    public NFA optional(NFA n) {
+    private NFA optional(NFA n) {
         State s = new State(NFA.count++);
         State e = new State(NFA.count++);
         n.states.addAll(Arrays.asList(s, e));
@@ -255,8 +248,45 @@ public class NFA {
         return n;
     }
 
-    public NFA charClass(Token t) {
+    private NFA charClass(Token t) {
         NFA n = new NFA();
+        String str = t.getValue();
+        System.out.println(str);
+        str = str.substring(1, str.length() - 1);
+        State s = new State(NFA.count++);
+        State e = new State(NFA.count++);
+        n.states.addAll(Arrays.asList(s, e));
+        n.initState = s;
+        n.endState = e;
+        for (int i = 0; i < str.length();) {
+            if (i > str.length() - 3 || str.charAt(i + 1) != '-') {
+                State l = new State(NFA.count++);
+                State r = new State(NFA.count++);
+                l.addTransitions(String.valueOf(str.charAt(i)), r);
+                s.addTransitions(null, l);
+                r.addTransitions(null, e);
+                n.states.addAll(Arrays.asList(l, r));
+                n.map.putAll(l.getTransitions());
+                n.map.putAll(r.getTransitions());
+                n.operands.append(str.charAt(i));
+                i++;
+            } else {
+                char min = str.charAt(i), max = str.charAt(i + 2);
+                for (char c = min; c <= max; c = (char) (c + 1)) {
+                    State l = new State(NFA.count++);
+                    State r = new State(NFA.count++);
+                    l.addTransitions(String.valueOf(c), r);
+                    s.addTransitions(null, l);
+                    r.addTransitions(null, e);
+                    n.states.addAll(Arrays.asList(l, r));
+                    n.map.putAll(l.getTransitions());
+                    n.map.putAll(r.getTransitions());
+                    n.operands.append(c);
+                }
+                i += 3;
+            }
+        }
+        n.map.putAll(s.getTransitions());
         return n;
     }
 
@@ -268,25 +298,12 @@ public class NFA {
     }
 
     /**
-     * @param initState the initState to set
-     */
-    public void setInitState(State initState) {
-        this.initState = initState;
-    }
-
-    /**
      * @return the endState
      */
     public State getEndState() {
         return endState;
     }
 
-    /**
-     * @param endState the endState to set
-     */
-    public void setEndState(State endState) {
-        this.endState = endState;
-    }
 
     /**
      * @return the map

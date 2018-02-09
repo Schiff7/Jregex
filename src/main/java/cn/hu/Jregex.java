@@ -14,7 +14,7 @@ public class Jregex {
     private NFA NFA;
     private DFA DFA;
 
-    public Jregex(String raw) {
+    Jregex(String raw) {
         this.raw = raw;
         try {
             this.tokens = tokenize(raw);    
@@ -28,7 +28,7 @@ public class Jregex {
     }
     /**
      * tokenize
-     * @param s
+     * @param s string
      */
     public static List<Token> tokenize(String s) throws TokenizeFailedException {
         List<Token> l = new ArrayList<>();
@@ -74,14 +74,14 @@ public class Jregex {
                     break;
                 case LEFT_PARENTHESIS:
                     int bracketsPattern = 0;
-                    String acc = "";
+                    StringBuilder acc = new StringBuilder();
                     String prefix = s.substring(i, i + 3);
                     Meta group = Meta.map(prefix);
                     if (null == group) {
                         group = meta;
                     }
                     for (; i < s.length();) {
-                        acc += s.charAt(i);
+                        acc.append(s.charAt(i));
                         if (s.charAt(i) == ')') {
                             bracketsPattern--;
                         } else if (s.charAt(i) == '(') {
@@ -91,34 +91,34 @@ public class Jregex {
                         if (bracketsPattern == 0) break;
                     }
                     if (i < s.length()) {
-                        l.add(new Token(group, acc));
+                        l.add(new Token(group, acc.toString()));
                         l.add(new Token(Meta.CONCAT, NONE));
                     } else {
                         throw new TokenizeFailedException();
                     }
                     break;
                 case LEFT_BRACE:
-                    acc = "{";
+                    acc = new StringBuilder("{");
                     char ch;
                     i++;
                     for (; ( ch = s.charAt(i) ) != '}'; i++) {
                         if ( ch != ',' && (ch < 48 || ch > 57 || i == s.length() - 1)) {
                             throw new TokenizeFailedException();
                         }
-                        acc += ch;
+                        acc.append(ch);
                     }
-                    acc += "}";
-                    l.add(l.size() - 1, new Token(Meta.REPEAT, acc));
+                    acc.append("}");
+                    l.add(l.size() - 1, new Token(Meta.REPEAT, acc.toString()));
                     i++;
                     break;
                 case LEFT_BRACKET:
-                    acc = "[";
+                    acc = new StringBuilder("[");
                     i++;
                     for (; ( ch = s.charAt(i) ) != ']'; i++) {
-                        acc += ch;
+                        acc.append(ch);
                     }
-                    acc += "]";
-                    l.add(new Token(meta, acc));
+                    acc.append("]");
+                    l.add(new Token(meta, acc.toString()));
                     l.add(new Token(Meta.CONCAT, NONE));
                     i++;
                     break;
@@ -168,7 +168,7 @@ public class Jregex {
                 currentState = nextState;
             }
         }
-        return this.DFA.getAcceptStates().contains(currentState) ? true : false;
+        return this.DFA.getAcceptStates().contains(currentState);
     }
 
     /**

@@ -37,7 +37,7 @@ public class Utils {
                         val = f.get(o);
                     } catch (Exception e) {
                         //TODO: handle exception
-                        System.out.println(e);
+                        e.printStackTrace();
                     }
                     result.append("\t").append(f.getName()).append(": ").append(val).append(",\n");
                 }

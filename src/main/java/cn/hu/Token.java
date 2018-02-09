@@ -7,7 +7,7 @@ public class Token {
     private Meta name;
     private String value;
 
-    public Token(Meta name, String value) {
+    Token(Meta name, String value) {
         this.name = name;
         this.value = value;
     }
