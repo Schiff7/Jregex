@@ -78,12 +78,17 @@ class DFA {
         if (states.isEmpty()) {
             return null;
         }
+        Set<String> strSet = new HashSet<>();
         List<Set<State>> r = new ArrayList<>();
-        states.forEach(state -> {
-            for (int i = 0; i < n.getOperands().length(); i++) {
-                String s = String.valueOf(n.getOperands().charAt(i));
+         states.forEach(stateSet -> {
+            Set<String> possibleStr = stateSet.stream().map(
+                            state -> state.getTransitions().keySet().stream()
+                                    .map(NFA.Pairs::getString).collect(Collectors.toSet())
+                    ).reduce(strSet, (acc, item) -> { acc.addAll(item); return acc; });
+
+            for (String s : possibleStr) {
                 Set<State> set = new HashSet<>();
-                Set<State> l = state.stream()
+                Set<State> l = stateSet.stream()
                         .map(x -> x.getTransitions()
                                 .keySet()
                                 .stream()
@@ -96,12 +101,12 @@ class DFA {
                         });
                 l = epsilonClosure(l);
                 if (this.states.contains(l)) {
-                    this.map.put(new DFA.Pairs(state, s), l);
+                    this.map.put(new DFA.Pairs(stateSet, s), l);
                 }
                 if ( !(this.states.contains(l) || l.isEmpty()) ) {
                     r.add(l);
                     this.states.add(l);
-                    this.map.put(new DFA.Pairs(state, s), l);
+                    this.map.put(new DFA.Pairs(stateSet, s), l);
                 }
             }
         });
