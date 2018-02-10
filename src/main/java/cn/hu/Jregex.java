@@ -1,9 +1,6 @@
 package cn.hu;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Jregex
@@ -108,7 +105,7 @@ public class Jregex {
                         acc.append(ch);
                     }
                     acc.append("}");
-                    l.add(l.size() - 1, new Token(Meta.REPEAT, acc.toString()));
+                    l.add(l.size() - 1, new Token(Meta.LEFT_BRACE, acc.toString()));
                     i++;
                     break;
                 case LEFT_BRACKET:
@@ -152,21 +149,47 @@ public class Jregex {
     }
     /**
      * matches
-     * @param s
+     * @param s string
      */
     public boolean matches(String s) {
         if (null == s)
             return false;
+        Map<Set<State>, int[]> loopStatus = new HashMap<>();
         Map<DFA.Pairs, Set<State>> m = this.DFA.getMap();
         Set<State> currentState = this.DFA.getInitState();
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             Set<State> nextState = m.get(new DFA.Pairs(currentState, String.valueOf(c)));
+            int[] scaleAndRepeat = loopStatus.get(nextState);
+            if (null != scaleAndRepeat) {
+                switch (scaleAndRepeat[1]) {
+                    case 0:
+                        if (scaleAndRepeat[2] > scaleAndRepeat[0])
+                            return false;
+                        break;
+                    case -1:
+                        break;
+                    default:
+                        if (scaleAndRepeat[2] > scaleAndRepeat[1])
+                            return false;
+                        break;
+                }
+                loopStatus.put(nextState, new int[]{scaleAndRepeat[0], scaleAndRepeat[1], scaleAndRepeat[2] + 1});
+            } else {
+                int[] scale = this.DFA.isLoop(nextState);
+                if (null != scale) {
+                    loopStatus.put(nextState, new int[]{scale[0], scale[1], 1});
+                }
+            }
             if (null == nextState) {
                 return false;
             } else {
                 currentState = nextState;
             }
+        }
+        for (int[] status : loopStatus.values()) {
+            if (status[2] < status[0])
+                return false;
         }
         return this.DFA.getAcceptStates().contains(currentState);
     }

@@ -1,5 +1,7 @@
 package cn.hu;
 
+import org.omg.PortableInterceptor.INACTIVE;
+
 import java.util.Map;
 import java.util.Stack;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ public class NFA {
     private State initState;
     private State endState;
     private StringBuffer operands;
+    private Map<State, int[]> loopState;
     private static int count = 0;
     
     /**
@@ -48,6 +51,7 @@ public class NFA {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.operands = new StringBuffer();
+        this.loopState = new HashMap<>();
     }
 
     /**
@@ -58,6 +62,7 @@ public class NFA {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.operands = new StringBuffer();
+        this.loopState = new HashMap<>();
 
         if (c.length() > 1)
             return;
@@ -139,11 +144,8 @@ public class NFA {
                             m = operandStack.pop();
                             operandStack.push(union(m, n));
                             break;
-                        case REPEAT:
-                            String s = token.getValue();
-                            int min = Integer.valueOf(s.substring(1, s.indexOf(',')));
-                            int max = Integer.valueOf(s.substring(s.indexOf(",") + 1, s.length() - 1));
-                            operandStack.push(repeat(operandStack.pop(), min, max));
+                        case LEFT_BRACE:
+                            operandStack.push(repeat(operandStack.pop(), t));
                             break;
                         case SLASH:
                             i++;
@@ -161,16 +163,45 @@ public class NFA {
         this.initState = r.initState;
         this.endState = r.endState;
         this.operands = r.operands;
+        this.loopState = r.loopState;
     }
     /**
      * repeat UNFINISHED
      * @param n NFA
-     * @param min specified minimum repeat times
-     * @param max specified maximum repeat times
+     * @param t token
      */
-    private NFA repeat(NFA n, int min, int max) {
+    private NFA repeat(NFA n, Token t) {
+        final String star = "{0,}";
+        final String plus = "{1,}";
+        final String optional = "{0,1}";
+        String s = t.getValue();
+        switch (s) {
+            case star:
+                return star(n);
+            case plus:
+                return plus(n);
+            case optional:
+                return optional(n);
+            default:
+                int indexOfComma = s.indexOf(',');
+                int max, min;
+                if (indexOfComma != -1) {
+                    min = Integer.valueOf(s.substring(1, indexOfComma));
+                    String suffix = s.substring(indexOfComma + 1, s.length() - 1);
+                    max = suffix.equals("") ? -1 : Integer.valueOf(suffix);
+                } else {
+                    min = Integer.valueOf(s.substring(1, s.length() - 1));
+                    max = 0;
+                }
+                int[] repeat = {min, max};
+                n.loopState.put(n.getEndState(), repeat);
+                if (min == 0) {
+                    return star(n);
+                } else {
+                    return plus(n);
+                }
+        }
 
-        return n;
     }
     /**
      * star
@@ -198,6 +229,7 @@ public class NFA {
     private NFA concat(NFA l, NFA r) {
         l.map.putAll(r.map);
         l.map.put(new NFA.Pairs(l.endState, null), r.initState);
+        l.loopState.putAll(r.loopState);
         l.states.addAll(r.states);
         l.operands.append(r.operands);
         l.endState.addTransitions(null, r.initState);
@@ -222,6 +254,7 @@ public class NFA {
         l.map.putAll(s.getTransitions());
         l.map.putAll(l.endState.getTransitions());
         l.map.putAll(r.endState.getTransitions());
+        l.loopState.putAll(r.loopState);
         l.states.addAll(Arrays.asList(s, e));
         l.initState = s;
         l.endState = e;
@@ -290,6 +323,7 @@ public class NFA {
         return n;
     }
 
+
     /**
      * @return the initState
      */
@@ -298,6 +332,15 @@ public class NFA {
     }
 
     /**
+     *
+     * @return the loopState
+     */
+    public Map<State, int[]> getLoopState() {
+        return loopState;
+    }
+
+    /**
+
      * @return the endState
      */
     public State getEndState() {

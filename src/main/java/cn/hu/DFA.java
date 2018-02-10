@@ -11,6 +11,7 @@ class DFA {
     private List<Set<State>> states;
     private Set<Set<State>> acceptStates;
     private Set<State> initState;
+    private Map<Set<State>, int[]> loopState;
     private StringBuffer operands;
 
     /**
@@ -54,6 +55,7 @@ class DFA {
         this.states = new ArrayList<>();
         this.initState = new HashSet<>();
         this.operands = new StringBuffer();
+        this.loopState = new HashMap<>();
     }
     /**
      * constructed from a NFA
@@ -62,6 +64,10 @@ class DFA {
     DFA(NFA n) {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
+        this.loopState = new HashMap<>();
+        n.getLoopState().forEach((state, array) -> {
+            this.loopState.put(epsilonClosure(new HashSet<>(Collections.singletonList(state))), array);
+        });
         Set<State> initState = epsilonClosure(new HashSet<>(Collections.singletonList(n.getInitState())));
         this.initState = initState;
         this.operands = n.getOperands();
@@ -133,6 +139,15 @@ class DFA {
             l.addAll(epsilonClosure(r));
         }
         return l;
+    }
+
+    public int[] isLoop(Set<State> state) {
+        for (Set<State> s : loopState.keySet()) {
+            if (state.containsAll(s)) {
+                return loopState.get(s);
+            }
+        }
+        return null;
     }
 
     /**

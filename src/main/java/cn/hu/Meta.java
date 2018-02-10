@@ -8,9 +8,7 @@ public enum Meta {
      * Virtual Mark.
      */
     OPERAND ("_", 4),
-    REPEAT ("_", 3),
     CONCAT ("_", 4),
-    CHARCLASS("_", 4),
 
 
     /**
@@ -24,15 +22,15 @@ public enum Meta {
     CARET ("^", 4),
     PLUS ("+", 3),
     OPTIONAL ("?", 3),
-    LEFT_PARENTHESIS ("(", 2),
-    NON_CAPTURING_GROUP ("(?:", 2),
-    POSITIVE_LOOKAHEAD ("(?=", 2),
-    NEGATIVE_LOOKAHEAD ("(?!", 2),
-    RIGHT_PARENTHESIS (")", 2),
-    LEFT_BRACKET ("[", 2),
-    RIGHT_BRACKET ("]", 2),
-    LEFT_BRACE ("{", 2),
-    RIGHT_BRACE ("}", 2),
+    LEFT_PARENTHESIS ("(", 4),
+    NON_CAPTURING_GROUP ("(?:", 4),
+    POSITIVE_LOOKAHEAD ("(?=", 4),
+    NEGATIVE_LOOKAHEAD ("(?!", 4),
+    RIGHT_PARENTHESIS (")", 4),
+    LEFT_BRACKET ("[", 4),
+    RIGHT_BRACKET ("]", 4),
+    LEFT_BRACE ("{", 3),
+    RIGHT_BRACE ("}", 3),
     POINT (".", 4),
     DIGITAL ("\\d", 4),
     LINEFEED ("\n", 4);
