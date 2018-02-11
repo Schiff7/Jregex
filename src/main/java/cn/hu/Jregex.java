@@ -56,13 +56,17 @@ public class Jregex {
                     }
                     break;
                 case BACKSLASH:
-                    String next = String.valueOf(s.charAt(i + 1));
+                    char chr = s.charAt(i + 1);
+                    String next = String.valueOf(chr);
                     Meta tmp =  Meta.map(c + next);
-                    if ( Meta.map(next) != null ) {
+                    if (Meta.map(next) != null) {
                         l.add(new Token(Meta.OPERAND, next));
                         i += 2;
-                    } else if ( tmp != null ) {
+                    } else if (tmp != null) {
                         l.add(new Token(tmp, c + next));
+                        i += 2;
+                    } else if (chr > 48 && chr < 58) {
+                        l.add(new Token(Meta.REFERENCE, c + next));
                         i += 2;
                     } else {
                         throw new TokenizeFailedException();
@@ -160,25 +164,29 @@ public class Jregex {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             Set<State> nextState = m.get(new DFA.Pairs(currentState, String.valueOf(c)));
-            int[] scaleAndRepeat = loopStatus.get(nextState);
-            if (null != scaleAndRepeat) {
-                switch (scaleAndRepeat[1]) {
-                    case 0:
-                        if (scaleAndRepeat[2] > scaleAndRepeat[0])
-                            return false;
-                        break;
-                    case -1:
-                        break;
-                    default:
-                        if (scaleAndRepeat[2] > scaleAndRepeat[1])
-                            return false;
-                        break;
-                }
-                loopStatus.put(nextState, new int[]{scaleAndRepeat[0], scaleAndRepeat[1], scaleAndRepeat[2] + 1});
-            } else {
-                int[] scale = this.DFA.isLoop(nextState);
-                if (null != scale) {
-                    loopStatus.put(nextState, new int[]{scale[0], scale[1], 1});
+            Set<State> currentLoop = DFA.isLoop(nextState);
+            if (null != currentLoop) {
+                int[] scaleAndRepeat = loopStatus.get(currentLoop);
+                if (null != scaleAndRepeat) {
+                    switch (scaleAndRepeat[1]) {
+                        case 0:
+                            if (scaleAndRepeat[2] + 1 > scaleAndRepeat[0])
+                                return false;
+                            break;
+                        case -1:
+                            break;
+                        default:
+                            if (scaleAndRepeat[2] + 1 > scaleAndRepeat[1])
+                                return false;
+                            break;
+                    }
+                    loopStatus.put(currentLoop, new int[]{scaleAndRepeat[0], scaleAndRepeat[1], scaleAndRepeat[2] + 1});
+                } else {
+
+                    int[] scale = DFA.getLoopState().get(currentLoop);
+                    if (null != scale) {
+                        loopStatus.put(currentLoop, new int[]{scale[0], scale[1], 1});
+                    }
                 }
             }
             if (null == nextState) {
@@ -192,6 +200,14 @@ public class Jregex {
                 return false;
         }
         return this.DFA.getAcceptStates().contains(currentState);
+    }
+
+    /**
+     * @param s string
+     * @return string list
+     */
+    public List<String> pattern(String s) {
+        return null;
     }
 
     /**

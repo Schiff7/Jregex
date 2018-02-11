@@ -9,6 +9,7 @@ public enum Meta {
      */
     OPERAND ("_", 4),
     CONCAT ("_", 4),
+    REFERENCE("_", 4),
 
 
     /**

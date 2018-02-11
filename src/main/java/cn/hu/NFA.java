@@ -19,6 +19,7 @@ public class NFA {
     private State endState;
     private StringBuffer operands;
     private Map<State, int[]> loopState;
+    private List<List<Token>> group;
     private static int count = 0;
     
     /**
@@ -84,6 +85,7 @@ public class NFA {
     NFA(List<Token> l) {
         Stack<NFA> operandStack = new Stack<>();
         Stack<Token> operatorStack = new Stack<>();
+        this.group = new ArrayList<>();
         for (int i = 0; i < l.size();) {
             Token token = l.get(i);
             if (token.getName() == Meta.OPERAND) {
@@ -98,11 +100,60 @@ public class NFA {
                             continue;
                         }
                         break;
+                    case REFERENCE:
+                        int referenceIndex = (int) token.getValue().charAt(1) - 48;
+                        operandStack.push(new NFA(this.group.get(referenceIndex - 1)));
+                        i++;
+                        continue;
                     case LEFT_PARENTHESIS:
                         String s = token.getValue();
                         s = "/" + s.substring(1, s.length() - 1) + "/";
                         try {
-                            NFA n = new NFA(Jregex.tokenize(s));
+                            List<Token> tl = Jregex.tokenize(s);
+                            group.add(tl);
+                            NFA n = new NFA(tl);
+                            operandStack.push(n);
+                            i++;
+                            continue;
+                        } catch (Exception e) {
+                            //TODO: handle exception
+                            e.printStackTrace();
+                        }
+                        break;
+                    case NON_CAPTURING_GROUP:
+                        s = token.getValue();
+                        s = "/" + s.substring(3, s.length() - 1) + "/";
+                        try {
+                            List<Token> tl = Jregex.tokenize(s);
+                            NFA n = new NFA(tl);
+                            operandStack.push(n);
+                            i++;
+                            continue;
+                        } catch (Exception e) {
+                            //TODO: handle exception
+                            e.printStackTrace();
+                        }
+                        break;
+                    case NEGATIVE_LOOKAHEAD:
+                        s = token.getValue();
+                        s = "/" + s.substring(3, s.length() - 1) + "/";
+                        try {
+                            List<Token> tl = Jregex.tokenize(s);
+                            NFA n = new NFA(tl);
+                            operandStack.push(n);
+                            i++;
+                            continue;
+                        } catch (Exception e) {
+                            //TODO: handle exception
+                            e.printStackTrace();
+                        }
+                        break;
+                    case POSITIVE_LOOKAHEAD:
+                        s = token.getValue();
+                        s = "/" + s.substring(3, s.length() - 1) + "/";
+                        try {
+                            List<Token> tl = Jregex.tokenize(s);
+                            NFA n = new NFA(tl);
                             operandStack.push(n);
                             i++;
                             continue;

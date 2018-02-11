@@ -141,13 +141,20 @@ class DFA {
         return l;
     }
 
-    public int[] isLoop(Set<State> state) {
+    public Set<State> isLoop(Set<State> state) {
         for (Set<State> s : loopState.keySet()) {
             if (state.containsAll(s)) {
-                return loopState.get(s);
+                return s;
             }
         }
         return null;
+    }
+
+    /**
+     * @return the loopState
+     */
+    public Map<Set<State>, int[]> getLoopState() {
+        return loopState;
     }
 
     /**

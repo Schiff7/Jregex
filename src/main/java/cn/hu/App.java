@@ -7,10 +7,10 @@ package cn.hu;
 public class App {
     public static void main( String[] args ) {
         System.out.println( "Hello World!" );
-        Jregex r = new Jregex("/a{1,2}/");
+        Jregex r = new Jregex("/(ab)\\1/");
         System.out.println(r.getTokens());
         Utils.show(r.getNFA());
         Utils.show(r.getDFA());
-        System.out.println(r.matches("a"));
+        System.out.println(r.matches("abab"));
     }
 }
