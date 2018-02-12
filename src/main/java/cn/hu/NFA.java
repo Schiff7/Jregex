@@ -56,8 +56,8 @@ public class NFA {
     }
 
     /**
-     * constructor with a String from a char. 
-     * @param c length 1 String
+     * constructor with a string from a char.
+     * @param c string
      */
     NFA(String c) {
         this.map = new HashMap<>();
@@ -65,8 +65,6 @@ public class NFA {
         this.operands = new StringBuffer();
         this.loopState = new HashMap<>();
 
-        if (c.length() > 1)
-            return;
         State x = new State(count++), y = new State(count++);
         x.addTransitions(c, y);
         this.initState = x;
@@ -103,6 +101,10 @@ public class NFA {
                     case REFERENCE:
                         int referenceIndex = (int) token.getValue().charAt(1) - 48;
                         operandStack.push(new NFA(this.group.get(referenceIndex - 1)));
+                        i++;
+                        continue;
+                    case POINT:
+                        operandStack.push(new NFA("ANY"));
                         i++;
                         continue;
                     case LEFT_PARENTHESIS:
@@ -333,44 +335,61 @@ public class NFA {
     }
 
     private NFA charClass(Token t) {
-        NFA n = new NFA();
+        NFA n;
         String str = t.getValue();
-        System.out.println(str);
         str = str.substring(1, str.length() - 1);
-        State s = new State(NFA.count++);
-        State e = new State(NFA.count++);
-        n.states.addAll(Arrays.asList(s, e));
-        n.initState = s;
-        n.endState = e;
-        for (int i = 0; i < str.length();) {
-            if (i > str.length() - 3 || str.charAt(i + 1) != '-') {
-                State l = new State(NFA.count++);
-                State r = new State(NFA.count++);
-                l.addTransitions(String.valueOf(str.charAt(i)), r);
-                s.addTransitions(null, l);
-                r.addTransitions(null, e);
-                n.states.addAll(Arrays.asList(l, r));
-                n.map.putAll(l.getTransitions());
-                n.map.putAll(r.getTransitions());
-                n.operands.append(str.charAt(i));
-                i++;
-            } else {
-                char min = str.charAt(i), max = str.charAt(i + 2);
-                for (char c = min; c <= max; c = (char) (c + 1)) {
+        if (str.charAt(0) != '^') {
+            n = new NFA();
+            State s = new State(NFA.count++);
+            State e = new State(NFA.count++);
+            n.states.addAll(Arrays.asList(s, e));
+            n.initState = s;
+            n.endState = e;
+            for (int i = 0; i < str.length(); ) {
+                if (i > str.length() - 3 || str.charAt(i + 1) != '-') {
                     State l = new State(NFA.count++);
                     State r = new State(NFA.count++);
-                    l.addTransitions(String.valueOf(c), r);
+                    l.addTransitions(String.valueOf(str.charAt(i)), r);
                     s.addTransitions(null, l);
                     r.addTransitions(null, e);
                     n.states.addAll(Arrays.asList(l, r));
                     n.map.putAll(l.getTransitions());
                     n.map.putAll(r.getTransitions());
-                    n.operands.append(c);
+                    n.operands.append(str.charAt(i));
+                    i++;
+                } else {
+                    char min = str.charAt(i), max = str.charAt(i + 2);
+                    for (char c = min; c <= max; c = (char) (c + 1)) {
+                        State l = new State(NFA.count++);
+                        State r = new State(NFA.count++);
+                        l.addTransitions(String.valueOf(c), r);
+                        s.addTransitions(null, l);
+                        r.addTransitions(null, e);
+                        n.states.addAll(Arrays.asList(l, r));
+                        n.map.putAll(l.getTransitions());
+                        n.map.putAll(r.getTransitions());
+                        n.operands.append(c);
+                    }
+                    i += 3;
                 }
-                i += 3;
             }
+            n.map.putAll(s.getTransitions());
+        } else {
+            StringBuffer charSet = new StringBuffer();
+            for (int i = 1; i < str.length(); ) {
+                if (i > str.length() - 3 || str.charAt(i + 1) != '-') {
+                    charSet.append(str.charAt(i));
+                    i++;
+                } else {
+                    char min = str.charAt(i), max = str.charAt(i + 2);
+                    for (char c = min; c <= max; c = (char) (c + 1)) {
+                        charSet.append(c);
+                    }
+                    i += 3;
+                }
+            }
+            n = new NFA("NOT(" + charSet + ")");
         }
-        n.map.putAll(s.getTransitions());
         return n;
     }
 

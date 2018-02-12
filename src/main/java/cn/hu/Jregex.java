@@ -143,6 +143,7 @@ public class Jregex {
                 case POINT:
                     l.add(new Token(meta, c));
                     l.add(new Token(Meta.CONCAT, NONE));
+                    i++;
                     break;
                 default:
                     l.add(new Token(meta, c));
@@ -164,6 +165,23 @@ public class Jregex {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             Set<State> nextState = m.get(new DFA.Pairs(currentState, String.valueOf(c)));
+            nextState = nextState != null ? nextState : m.get(new DFA.Pairs(currentState, "ANY"));
+            if (null == nextState) {
+                Map<DFA.Pairs, Set<State>> unfiniteTransition = this.DFA.getUnfiniteTransition();
+                for (DFA.Pairs pairs : unfiniteTransition.keySet()) {
+                    String str = pairs.getString();
+                    str = str.substring(3, str.length() - 1);
+                    if (pairs.getState().equals(currentState) && str.indexOf(c) == -1) {
+                        nextState = unfiniteTransition.get(pairs);
+                        break;
+                    }
+                }
+            }
+            if (null == nextState) {
+                return false;
+            } else {
+                currentState = nextState;
+            }
             Set<State> currentLoop = DFA.isLoop(nextState);
             if (null != currentLoop) {
                 int[] scaleAndRepeat = loopStatus.get(currentLoop);
@@ -189,11 +207,7 @@ public class Jregex {
                     }
                 }
             }
-            if (null == nextState) {
-                return false;
-            } else {
-                currentState = nextState;
-            }
+
         }
         for (int[] status : loopStatus.values()) {
             if (status[2] < status[0])

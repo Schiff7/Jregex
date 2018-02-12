@@ -12,6 +12,7 @@ class DFA {
     private Set<Set<State>> acceptStates;
     private Set<State> initState;
     private Map<Set<State>, int[]> loopState;
+    private Map<Pairs, Set<State>> unfiniteTransition;
     private StringBuffer operands;
 
     /**
@@ -24,6 +25,20 @@ class DFA {
         Pairs(Set<State> state, String string) {
             this.state = state;
             this.string = string;
+        }
+
+        /**
+         * @return the state
+         */
+        public Set<State> getState() {
+            return state;
+        }
+
+        /**
+         * @return the string
+         */
+        public String getString() {
+            return string;
         }
 
         @Override
@@ -65,6 +80,7 @@ class DFA {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.loopState = new HashMap<>();
+        this.unfiniteTransition = new HashMap<>();
         n.getLoopState().forEach((state, array) -> {
             this.loopState.put(epsilonClosure(new HashSet<>(Collections.singletonList(state))), array);
         });
@@ -106,6 +122,9 @@ class DFA {
                             return acc;
                         });
                 l = epsilonClosure(l);
+                if (null != s && s.length() > 1 && s.substring(0, 3).equals("NOT")) {
+                    this.unfiniteTransition.put(new DFA.Pairs(stateSet, s), l);
+                }
                 if (this.states.contains(l)) {
                     this.map.put(new DFA.Pairs(stateSet, s), l);
                 }
@@ -148,6 +167,10 @@ class DFA {
             }
         }
         return null;
+    }
+
+    public Map<Pairs, Set<State>> getUnfiniteTransition() {
+        return unfiniteTransition;
     }
 
     /**
