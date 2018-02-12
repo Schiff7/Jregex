@@ -1,4 +1,4 @@
-# learn-regex
+# Jregex
 Simple regular expression parser.
 
 2018-02-12 :waning_crescent_moon:
