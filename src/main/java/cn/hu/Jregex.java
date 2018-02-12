@@ -251,6 +251,16 @@ public class Jregex {
     public String getRaw() {
         return raw;
     }
+
+    @Override
+    public String toString() {
+        return "cn.hu.Jregex\n{"
+                + "\n\traw: " + raw
+                + "\n\ttokens: " + tokens
+                + "\n\tNFA: " + NFA
+                + "\n\tDFA: " + DFA
+                + "\n}";
+    }
 }
 
 class TokenizeFailedException extends Exception {

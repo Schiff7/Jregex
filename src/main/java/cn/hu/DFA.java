@@ -207,4 +207,17 @@ class DFA {
     public StringBuffer getOperands() {
         return operands;
     }
+
+    @Override
+    public String toString() {
+        return "cn.hu.DFA\n\t{"
+                + "\n\t\tmap: " + map
+                + "\n\t\tstates: " + states
+                + "\n\t\tacceptStates: " + acceptStates
+                + "\n\t\tinitState: " + initState
+                + "\n\t\tloopState: " + loopState
+                + "\n\t\tunfiniteTransition: " + unfiniteTransition
+                + "\n\t\toperands: " + operands
+                + "\n\t}";
+    }
 }

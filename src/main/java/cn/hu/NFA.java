@@ -438,4 +438,18 @@ public class NFA {
     public StringBuffer getOperands() {
         return operands;
     }
+
+    @Override
+    public String toString() {
+        return "cn.hu.NFA\n\t{"
+                + "\n\t\tmap: " + map
+                + "\n\t\tstates: " + states
+                + "\n\t\tinitState: " + initState
+                + "\n\t\tendState: " + endState
+                + "\n\t\tloopState: " + loopState
+                + "\n\t\toperands: " + operands
+                + "\n\t\tgroup:" + group
+                + "\n\t\tcount: " + count
+                + "\n\t}";
+    }
 }
