@@ -68,9 +68,11 @@ class DFA {
     DFA() {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
+        this.acceptStates = new HashSet<>();
         this.initState = new HashSet<>();
         this.operands = new StringBuffer();
         this.loopState = new HashMap<>();
+        this.unfiniteTransition = new HashMap<>();
     }
     /**
      * constructed from a NFA
@@ -105,17 +107,23 @@ class DFA {
          states.forEach(stateSet -> {
             Set<String> possibleStr = stateSet.stream().map(
                             state -> state.getTransitions().keySet().stream()
-                                    .map(NFA.Pairs::getString).collect(Collectors.toSet())
+                                    .map(NFA.Pairs::getString).filter(Objects::nonNull).collect(Collectors.toSet())
                     ).reduce(strSet, (acc, item) -> { acc.addAll(item); return acc; });
-
             for (String s : possibleStr) {
                 Set<State> set = new HashSet<>();
                 Set<State> l = stateSet.stream()
                         .map(x -> x.getTransitions()
                                 .keySet()
                                 .stream()
-                                .filter(pairs -> null != pairs.getString() && pairs.getString().equals(s))
-                                .map(pairs -> x.getTransitions().get(pairs)
+                                .filter(pairs -> {
+                                    String str = pairs.getString();
+                                    return null != str
+                                            && (str.equals(s)
+                                            || str.equals("ANY")
+                                            || str.length() > 3
+                                            && (str.substring(0, 3).equals("NOT")
+                                            && !str.substring(3, str.length() - 4).contains(s)));
+                                }).map(pairs -> x.getTransitions().get(pairs)
                         ).collect(Collectors.toSet()))
                         .reduce(set, (acc, item) -> {
                             acc.addAll(item);

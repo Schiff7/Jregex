@@ -34,7 +34,7 @@ public enum Meta {
     RIGHT_BRACE ("}", 3),
     POINT (".", 4),
     DIGITAL ("\\d", 4),
-    LINEFEED ("\n", 4);
+    BLANk ("\\s", 4);
 
     private final String value;
     private final int priority;

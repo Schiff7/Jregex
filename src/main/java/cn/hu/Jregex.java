@@ -152,8 +152,79 @@ public class Jregex {
         }
         return l;
     }
+
     /**
-     * matches
+     *
+     */
+    private class Machine {
+        private DFA dfa;
+        private Set<State> currentState;
+        private Map<Set<State>, int[]> loops;
+        private StringBuffer operands;
+        Machine(DFA dfa) {
+            this.dfa = dfa;
+            this.currentState = dfa.getInitState();
+            this.loops = new HashMap<>();
+            this.operands = new StringBuffer();
+        }
+        void push(char ch) {
+            String s = String.valueOf(ch);
+            this.operands.append(s);
+            Map<DFA.Pairs, Set<State>> m = dfa.getMap();
+            Set<State> nextState = m.get(new DFA.Pairs(currentState, s));
+            nextState = nextState != null ? nextState : m.get(new DFA.Pairs(currentState, "ANY"));
+            if (null == nextState) {
+                Map<DFA.Pairs, Set<State>> unfiniteTransition = DFA.getUnfiniteTransition();
+                for (DFA.Pairs pairs : unfiniteTransition.keySet()) {
+                    String str = pairs.getString();
+                    str = str.substring(3, str.length() - 1);
+                    if (pairs.getState().equals(currentState) && !str.contains(s)) {
+                        nextState = unfiniteTransition.get(pairs);
+                        break;
+                    }
+                }
+            }
+            Set<State> currentLoop = DFA.isLoop(nextState);
+            if (null != currentLoop) {
+                int[] scaleAndRepeat = loops.get(currentLoop);
+                if (null != scaleAndRepeat) {
+                    loops.put(currentLoop, new int[]{scaleAndRepeat[0], scaleAndRepeat[1], scaleAndRepeat[2] + 1});
+                } else {
+                    int[] scale = DFA.getLoopState().get(currentLoop);
+                    if (null != scale) {
+                        loops.put(currentLoop, new int[]{scale[0], scale[1], 1});
+                    }
+                }
+            }
+            currentState = nextState;
+        }
+
+        void reset() {
+            currentState = dfa.getInitState();
+            loops = new HashMap<>();
+            operands = new StringBuffer();
+        }
+
+        boolean pack() {
+            return null != currentState;
+        }
+
+        boolean stop() {
+            for (int[] status : loops.values()) {
+                if (status[2] < status[0] || status[2] < status[1])
+                    return false;
+            }
+            return dfa.getAcceptStates().contains(currentState);
+        }
+
+        boolean isHead(char ch) {
+            return null != dfa.getMap().get(new DFA.Pairs(dfa.getInitState(), String.valueOf(ch)));
+        }
+
+    }
+
+    /**
+     * matches OLD
      * @param s string
      */
     public boolean matches(String s) {
@@ -217,11 +288,49 @@ public class Jregex {
     }
 
     /**
+     * NEW
      * @param s string
-     * @return string list
+     * @return _
+     */
+    public boolean _matches(String s) {
+        Machine m = new Machine(this.DFA);
+        for (int i = 0; i < s.length(); i++) {
+            m.push(s.charAt(i));
+            if (!m.pack())
+                return false;
+        }
+        return m.stop();
+    }
+
+    /**
+     * @param s string
+     * @return string list accc
      */
     public List<String> pattern(String s) {
-        return null;
+        List<String> result = new ArrayList<>();
+        Machine m = new Machine(DFA);
+        int privousIndex = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            boolean isValid = m.stop();
+            m.push(ch);
+            if (!m.pack()) {
+                m.reset();
+                if (isValid && privousIndex != i) {
+                    result.add("(" + privousIndex + "): " + s.substring(privousIndex, i));
+                }
+                if (m.isHead(ch)) {
+                    m.push(ch);
+                    privousIndex = i;
+                } else {
+                    privousIndex = i + 1;
+                }
+            }
+        }
+        if (m.stop()) {
+            result.add("(" + privousIndex + "): " + s.substring(privousIndex));
+        }
+        return result;
     }
 
     /**
