@@ -57,22 +57,22 @@ public class NFA {
 
     /**
      * constructor with a string from a char.
-     * @param c string
+     * @param ch string
      */
-    NFA(String c) {
+    NFA(String ch) {
         this.map = new HashMap<>();
         this.states = new ArrayList<>();
         this.operands = new StringBuffer();
         this.loopState = new HashMap<>();
 
         State x = new State(count++), y = new State(count++);
-        x.addTransitions(c, y);
+        x.addTransitions(ch, y);
         this.initState = x;
         this.endState = y;
-        this.operands.append(c);
+        this.operands.append(ch);
         this.states.add(x);
         this.states.add(y);
-        this.map.put(new Pairs(x, c), y);
+        this.map.put(new Pairs(x, ch), y);
     }
 
 
@@ -105,6 +105,14 @@ public class NFA {
                         continue;
                     case POINT:
                         operandStack.push(new NFA("ANY"));
+                        i++;
+                        continue;
+                    case CARET:
+                        operandStack.push(new NFA("START"));
+                        i++;
+                        continue;
+                    case DOLLAR:
+                        operandStack.push(new NFA("END"));
                         i++;
                         continue;
                     case LEFT_PARENTHESIS:

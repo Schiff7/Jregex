@@ -7,10 +7,9 @@ package cn.hu;
 public class App {
     public static void main( String[] args ) {
         System.out.println( "Hello World!" );
-        Jregex r = new Jregex("/(a|c)*/");
+        Jregex r = new Jregex("/^c[a-z]*b$/");
         System.out.println(r);
-        System.out.println(r.matches("ac"));
-        System.out.println(r._matches("ac"));
-        System.out.println(r.pattern("caccccccccccccacbaksjdhklaac"));
+        System.out.println(r.match("ac"));
+        System.out.println(r.patterns("caccccccccccccacbaksjdhklaac"));
     }
 }

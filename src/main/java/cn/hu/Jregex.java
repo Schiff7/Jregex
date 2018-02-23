@@ -31,7 +31,7 @@ public class Jregex {
         List<Token> l = new ArrayList<>();
         final String NONE = "_";
         for (int i = 0; i < s.length();) {
-            String c = String.valueOf(s.charAt(i));
+            String c = s.substring(i, i + 1);
             Meta meta = Meta.map(c);
             if (null == meta) {
                 l.add(new Token(Meta.OPERAND, c));
@@ -145,6 +145,16 @@ public class Jregex {
                     l.add(new Token(Meta.CONCAT, NONE));
                     i++;
                     break;
+                case CARET:
+                    l.add(new Token(meta, c));
+                    l.add(new Token(Meta.CONCAT, NONE));
+                    i++;
+                    break;
+                case DOLLAR:
+                    l.add(new Token(meta, c));
+                    l.add(new Token(Meta.CONCAT, NONE));
+                    i++;
+                    break;
                 default:
                     l.add(new Token(meta, c));
                     i++;
@@ -154,7 +164,8 @@ public class Jregex {
     }
 
     /**
-     *
+     * Machine
+     * constructed from a DFA, accepts characters and change its current inner status.
      */
     private class Machine {
         private DFA dfa;
@@ -167,18 +178,17 @@ public class Jregex {
             this.loops = new HashMap<>();
             this.operands = new StringBuffer();
         }
-        void push(char ch) {
-            String s = String.valueOf(ch);
-            this.operands.append(s);
+        void push(String ch) {
+            this.operands.append(ch);
             Map<DFA.Pairs, Set<State>> m = dfa.getMap();
-            Set<State> nextState = m.get(new DFA.Pairs(currentState, s));
+            Set<State> nextState = m.get(new DFA.Pairs(currentState, ch));
             nextState = nextState != null ? nextState : m.get(new DFA.Pairs(currentState, "ANY"));
             if (null == nextState) {
                 Map<DFA.Pairs, Set<State>> unfiniteTransition = DFA.getUnfiniteTransition();
                 for (DFA.Pairs pairs : unfiniteTransition.keySet()) {
                     String str = pairs.getString();
                     str = str.substring(3, str.length() - 1);
-                    if (pairs.getState().equals(currentState) && !str.contains(s)) {
+                    if (pairs.getState().equals(currentState) && !str.contains(ch)) {
                         nextState = unfiniteTransition.get(pairs);
                         break;
                     }
@@ -206,7 +216,7 @@ public class Jregex {
         }
 
         boolean pack() {
-            return null != currentState;
+            return null == currentState;
         }
 
         boolean stop() {
@@ -217,104 +227,50 @@ public class Jregex {
             return dfa.getAcceptStates().contains(currentState);
         }
 
-        boolean isHead(char ch) {
+        boolean isHead(String ch) {
             return null != dfa.getMap().get(new DFA.Pairs(dfa.getInitState(), String.valueOf(ch)));
         }
 
     }
 
     /**
-     * matches OLD
+     * match
      * @param s string
+     * @return a boolean value to show whether the given string matches the pattern.
      */
-    public boolean matches(String s) {
-        if (null == s)
-            return false;
-        Map<Set<State>, int[]> loopStatus = new HashMap<>();
-        Map<DFA.Pairs, Set<State>> m = this.DFA.getMap();
-        Set<State> currentState = this.DFA.getInitState();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            Set<State> nextState = m.get(new DFA.Pairs(currentState, String.valueOf(c)));
-            nextState = nextState != null ? nextState : m.get(new DFA.Pairs(currentState, "ANY"));
-            if (null == nextState) {
-                Map<DFA.Pairs, Set<State>> unfiniteTransition = this.DFA.getUnfiniteTransition();
-                for (DFA.Pairs pairs : unfiniteTransition.keySet()) {
-                    String str = pairs.getString();
-                    str = str.substring(3, str.length() - 1);
-                    if (pairs.getState().equals(currentState) && str.indexOf(c) == -1) {
-                        nextState = unfiniteTransition.get(pairs);
-                        break;
-                    }
-                }
-            }
-            if (null == nextState) {
-                return false;
-            } else {
-                currentState = nextState;
-            }
-            Set<State> currentLoop = DFA.isLoop(nextState);
-            if (null != currentLoop) {
-                int[] scaleAndRepeat = loopStatus.get(currentLoop);
-                if (null != scaleAndRepeat) {
-                    switch (scaleAndRepeat[1]) {
-                        case 0:
-                            if (scaleAndRepeat[2] + 1 > scaleAndRepeat[0])
-                                return false;
-                            break;
-                        case -1:
-                            break;
-                        default:
-                            if (scaleAndRepeat[2] + 1 > scaleAndRepeat[1])
-                                return false;
-                            break;
-                    }
-                    loopStatus.put(currentLoop, new int[]{scaleAndRepeat[0], scaleAndRepeat[1], scaleAndRepeat[2] + 1});
-                } else {
-
-                    int[] scale = DFA.getLoopState().get(currentLoop);
-                    if (null != scale) {
-                        loopStatus.put(currentLoop, new int[]{scale[0], scale[1], 1});
-                    }
-                }
-            }
-
-        }
-        for (int[] status : loopStatus.values()) {
-            if (status[2] < status[0])
-                return false;
-        }
-        return this.DFA.getAcceptStates().contains(currentState);
-    }
-
-    /**
-     * NEW
-     * @param s string
-     * @return _
-     */
-    public boolean _matches(String s) {
+    public boolean match(String s) {
         Machine m = new Machine(this.DFA);
+        if (!m.isHead(s.substring(0, 1)))
+            m.push("START");
         for (int i = 0; i < s.length(); i++) {
-            m.push(s.charAt(i));
-            if (!m.pack())
+            m.push(s.substring(i, i + 1));
+            if (m.pack())
                 return false;
         }
+        if (!m.stop())
+            m.push("END");
         return m.stop();
     }
 
     /**
+     * patterns
+     * find substrings that match the pattern.
      * @param s string
-     * @return string list accc
+     * @return string list
      */
-    public List<String> pattern(String s) {
+    public List<String> patterns(String s) {
         List<String> result = new ArrayList<>();
         Machine m = new Machine(DFA);
+        m.push("START");
+        if (m.pack()) {
+            m.reset();
+        }
         int privousIndex = 0;
         for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
+            String ch = s.substring(i, i + 1);
             boolean isValid = m.stop();
             m.push(ch);
-            if (!m.pack()) {
+            if (m.pack()) {
                 m.reset();
                 if (isValid && privousIndex != i) {
                     result.add("(" + privousIndex + "): " + s.substring(privousIndex, i));
@@ -327,8 +283,14 @@ public class Jregex {
                 }
             }
         }
+
         if (m.stop()) {
             result.add("(" + privousIndex + "): " + s.substring(privousIndex));
+        } else {
+            m.push("END");
+            if (m.stop()) {
+                result.add("(" + privousIndex + "): " + s.substring(privousIndex));
+            }
         }
         return result;
     }
