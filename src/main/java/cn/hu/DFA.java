@@ -169,9 +169,11 @@ class DFA {
     }
 
     public Set<State> isLoop(Set<State> state) {
-        for (Set<State> s : loopState.keySet()) {
-            if (state.containsAll(s)) {
-                return s;
+        if (state != null) {
+            for (Set<State> s : loopState.keySet()) {
+                if (state.containsAll(s)) {
+                    return s;
+                }
             }
         }
         return null;

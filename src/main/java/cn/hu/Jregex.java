@@ -221,7 +221,7 @@ public class Jregex {
 
         boolean stop() {
             for (int[] status : loops.values()) {
-                if (status[2] < status[0] || status[2] < status[1])
+                if (status[2] < status[0] || status[2] > status[1])
                     return false;
             }
             return dfa.getAcceptStates().contains(currentState);
